@@ -40,40 +40,6 @@ Simply send any supported file to the bot via WhatsApp. The system will:
 4. Build keyword index for fast matching
 5. Store everything permanently
 
-**Supported formats:**
-- PDF (`.pdf`)
-- Microsoft Word (`.docx`)
-- Plain text (`.txt`)
-- Markdown (`.md`)
-
-### Searching Documents
-
-Use explicit trigger phrases to search your documents:
-```
-"Search my documents for patient intake workflow"
-"What do my documents say about Dr. Kumar?"
-"Based on my uploads, what is the hierarchy of progressive yeses?"
-"Use my files to explain the ecosystem"
-"Check my documents for information about Unblinded Health"
-```
-
-### Normal Conversation
-
-For general questions that don't require document search, just ask normally:
-```
-"How are you?"
-"What's the weather like?"
-"Explain quantum mechanics"
-```
-
-The bot will only search documents when you explicitly request it.
-
-### Managing Documents
-```
-"List my documents"
-"What documents do I have?"
-"Show my uploaded files"
-```
 
 ## Architecture
 
@@ -99,56 +65,158 @@ document_storage/
     └── [userId]_[timestamp]_[filename].json # Chunk embeddings
 ```
 
-### Chunking Strategy
 
-- **Method:** Fixed-size sliding window
-- **Chunk size:** 500 words
-- **Overlap:** 100 words
-- **Purpose:** Preserve context at boundaries while maintaining manageable chunk sizes
+# UNBLINDED MASTERY DATA INTEGRATION
 
-### Hybrid Search Weights
+WhatsApp bot with Clawdbot integration and RAG document retrieval.
 
-- **Keyword (TF-IDF):** 40%
-  - Fast exact matching
-  - Good for specific terminology
-  - Catches rare/unique terms
 
-- **Semantic (Embeddings):** 60%
-  - Understands meaning and context
-  - Handles synonyms and related concepts
-  - Better recall for conceptual queries
+## Quick Start
 
-### Embedding Model
+### 1. Clone Repository
+```bash
+git clone https://github.com/NeelM0906/Bomboclat.git
+cd Bomboclat
+```
 
-- **Model:** `Xenova/all-MiniLM-L6-v2`
-- **Dimensions:** 384
-- **Type:** Sentence Transformer
-- **Similarity:** Cosine similarity (threshold > 0.3)
+### 2. Install Dependencies
+```bash
+pnpm install
+pip install pinecone openai
+```
 
-## Technical Details
+### 3. Setup Skills
 
-### Key Technologies
+**Windows:**
+```bash
+setup-skills.bat
+```
 
-- **Text Extraction:**
-  - `pdf-parse` - PDF processing
-  - `mammoth` - DOCX processing
-  - Node.js `fs` - TXT/MD reading
+**Linux/Mac:**
+```bash
+chmod +x setup-skills.sh
+./setup-skills.sh
+```
 
-- **Search & Retrieval:**
-  - `natural` - TF-IDF implementation
-  - `@xenova/transformers` - Embedding generation
-  - Custom cosine similarity implementation
+This copies the Unblinded Knowledge skill to your Clawdbot workspace.
 
-- **Storage:**
-  - Filesystem-based storage
-  - JSON metadata indexing
-  - In-memory caching for performance
+### 4. Configure API Keys
 
-### Performance Characteristics
+**Pinecone API Key:**
+- Get from: https://app.pinecone.io/ → API Keys
 
-- **First upload:** Slower (downloads embedding model ~90MB)
-- **Subsequent uploads:** Fast (model cached)
-- **Search latency:** <1s for typical queries
-- **Storage:** ~1.5x original document size (text + embeddings)
-- **Scalability:** Suitable for <1000 documents per user
+**OpenAI API Key:**
+- Get from: https://platform.openai.com/api-keys
 
+**Set environment variables:**
+
+**Windows:**
+```bash
+set PINECONE_API_KEY=your-pinecone-key
+set OPENAI_API_KEY=your-openai-key
+```
+
+**Linux/Mac:**
+```bash
+export PINECONE_API_KEY=your-pinecone-key
+export OPENAI_API_KEY=your-openai-key
+```
+
+**Make permanent (optional):**
+
+**Windows:**
+```bash
+setx PINECONE_API_KEY "your-key"
+setx OPENAI_API_KEY "your-key"
+```
+
+**Linux/Mac:**
+```bash
+echo 'export PINECONE_API_KEY="your-key"' >> ~/.bashrc
+echo 'export OPENAI_API_KEY="your-key"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+### 5. Run Clawdbot
+```bash
+pnpm clawdbot gateway --port 18789
+```
+
+### 6. Connect WhatsApp
+
+Follow the QR code prompt to link your WhatsApp.
+
+### 7. Use Unblinded Knowledge
+
+On WhatsApp:
+```
+"activate unblinded knowledge"
+"What is Sean's teaching methodology?"
+```
+
+
+
+## Project Structure
+```
+Bomboclat/
+├── setup-skills.bat          # Windows skill installer
+├── setup-skills.sh           # Linux/Mac skill installer
+├── skills/
+│   ├── document-store/       # Document RAG system
+│   └── unblinded-knowledge/  # Pinecone knowledge base
+│       ├── SKILL.md          # Clawdbot skill definition
+│       ├── query.py          # Pinecone query script
+│       └── README.md         # Skill documentation
+├── clawdbot.config.js        # Clawdbot configuration
+└── README.md                 # This file
+```
+
+## 📖 Usage
+
+### Activate Mode
+```
+You: "activate unblinded knowledge"
+Bot: ✅ Unblinded Knowledge Mode activated.
+     I will ONLY use Pinecone ublib2, ignoring uploaded documents.
+```
+
+### Query the Knowledge Base
+```
+You: "What is predictive diagnostics?"
+
+Bot: 🔍 Pinecone Query: "predictive diagnostics"
+
+     📊 Results (Avg Relevance: 0.42):
+     
+     Result 1 (0.49): Predictive Diagnostic asks whether 
+     teaching creates lasting installation vs temporary 
+     understanding...
+     
+     Result 2 (0.38): The question is not "How efficiently 
+     did I transfer information?" but "Did I create emotional 
+     grounding..."
+     
+     💡 Based on Pinecone ublib2:
+     Predictive Diagnostics is a framework that evaluates 
+     whether teaching creates emotional grounding that anchors 
+     information to feeling.
+```
+
+### Exit Mode
+```
+You: "exit unblinded mode"
+Bot: ✅ Normal mode restored. I can now use all knowledge sources.
+```
+
+---
+
+## 🎓 Example Queries
+
+### High Relevance (Work Well)
+```
+"What is predictive diagnostics?"
+"What is Sean's teaching philosophy?"
+"What is ACTi company culture?"
+"What is the hierarchy of progressive yeses?"
+"How does Sean approach teaching?"
+```
